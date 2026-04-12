@@ -37,35 +37,9 @@ class ChatRequest(BaseModel):
 
 @app.get("/")
 def root():
-    return {"status": "ok"}
+    return {"status": "working"}
 
-@app.post("/chat")
-async def chat(req: ChatRequest):
-    session_id = req.session_id
 
-    if session_id not in sessions:
-        sessions[session_id] = []
-
-    conversation = sessions[session_id]
-    conversation.append({"role": "user", "content": req.message})
-
-    try:
-        response = openai_client.responses.create(
-            input=conversation,
-            extra_body={
-                "agent_reference": {
-                    "name": my_agent,
-                    "version": my_version,
-                    "type": "agent_reference",
-                }
-            },
-        )
-
-        reply = response.output_text
-
-        conversation.append({"role": "assistant", "content": reply})
-
-        return {"reply": reply}
 
     except Exception as e:
         return {"error": str(e)}

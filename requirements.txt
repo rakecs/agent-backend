@@ -2,3 +2,6 @@ azure-ai-projects>=2.0.0
 azure-identity~=1.25.2
 ansible-core~=2.19.7
 openai~=2.8.0
+fastapi
+uvicorn
+azure-identity
