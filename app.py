@@ -39,7 +39,39 @@ class ChatRequest(BaseModel):
 def root():
     return {"status": "working"}
 
-
-
+@app.post("/chat")
+def chat(request: ChatRequest):
+    try:
+        session_id = request.session_id
+        message = request.message
+        
+        # Get or create thread for this session
+        if session_id not in sessions:
+            thread = openai_client.beta.threads.create()
+            sessions[session_id] = thread.id
+        
+        thread_id = sessions[session_id]
+        
+        # Add user message to thread
+        openai_client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=message
+        )
+        
+        # Run the agent
+        run = openai_client.beta.threads.runs.create_and_poll(
+            thread_id=thread_id,
+            assistant_id=my_agent
+        )
+        
+        # Get the response
+        if run.status == "completed":
+            messages = openai_client.beta.threads.messages.list(thread_id=thread_id)
+            reply = messages.data[0].content[0].text.value
+            return {"reply": reply}
+        else:
+            return {"error": f"Run status: {run.status}"}
+            
     except Exception as e:
         return {"error": str(e)}
