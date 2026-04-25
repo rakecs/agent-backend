@@ -1,8 +1,11 @@
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from azure.identity import DefaultAzureCredential
 from azure.ai.projects import AIProjectClient
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 # ---- Azure AI Foundry Setup ----
 my_endpoint = "https://clinicexpert.services.ai.azure.com/api/projects/cliniexpert"
@@ -37,6 +40,11 @@ class ChatRequest(BaseModel):
 
 @app.get("/")
 def root():
+    # Serve the index.html file
+    return FileResponse("index.html")
+
+@app.get("/health")
+def health():
     return {"status": "working"}
 
 @app.post("/chat")
