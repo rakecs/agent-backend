@@ -5,3 +5,4 @@ openai~=2.8.0
 fastapi
 uvicorn
 azure-identity
+gunicorn
