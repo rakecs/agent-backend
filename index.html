@@ -1,69 +1,402 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>AI Agent Chat</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CliniExpert - AI Clinical Assistant</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial;
-      max-width: 700px;
-      margin: auto;
-      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f5f5;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #333;
     }
-    #chat {
-      border: 1px solid #ddd;
-      padding: 10px;
-      height: 400px;
+
+    .container {
+      width: 95%;
+      max-width: 1000px;
+      height: 95vh;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      background: #2c3e50;
+      color: white;
+      padding: 20px 30px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .header p {
+      font-size: 13px;
+      opacity: 0.85;
+      font-weight: 300;
+    }
+
+    .chat-container {
+      flex: 1;
       overflow-y: auto;
-      margin-bottom: 10px;
+      padding: 24px;
+      background: #fafafa;
     }
-    .user { color: blue; }
-    .agent { color: green; }
+
+    .message {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+      color: white;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .message.user .message-avatar {
+      background: #2c3e50;
+      margin-left: 10px;
+    }
+
+    .message.agent .message-avatar {
+      background: #4a90e2;
+      margin-right: 10px;
+    }
+
+    .message-content {
+      max-width: 65%;
+      padding: 12px 16px;
+      border-radius: 4px;
+      line-height: 1.6;
+      word-wrap: break-word;
+      font-size: 14px;
+    }
+
+    .message.user .message-content {
+      background: #2c3e50;
+      color: white;
+    }
+
+    .message.agent .message-content {
+      background: white;
+      color: #333;
+      border: 1px solid #e0e0e0;
+    }
+
+    .message-time {
+      font-size: 10px;
+      color: rgba(255,255,255,0.6);
+      margin-top: 6px;
+      display: block;
+    }
+
+    .message.agent .message-time {
+      color: #999;
+    }
+
+    .typing-indicator {
+      display: none;
+      padding: 12px 24px;
+      align-items: center;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .typing-indicator.active {
+      display: flex;
+    }
+
+    .typing-indicator span {
+      height: 6px;
+      width: 6px;
+      background: #999;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 0 2px;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .typing-indicator span:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0s;
+    }
+
+    @keyframes bounce {
+      0%, 80%, 100% {
+        transform: scale(0);
+      }
+      40% {
+        transform: scale(1);
+      }
+    }
+
+    .input-container {
+      padding: 16px 24px;
+      background: white;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      position: relative;
+    }
+
+    #messageInput {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #d0d0d0;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #messageInput:focus {
+      border-color: #4a90e2;
+    }
+
+    #sendButton {
+      padding: 10px 24px;
+      background: #2c3e50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    #sendButton:hover {
+      background: #34495e;
+    }
+
+    #sendButton:active {
+      background: #1a252f;
+    }
+
+    #sendButton:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: #2c3e50;
+    }
+
+    .error-message {
+      background: #fff5f5;
+      color: #c53030;
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin: 12px 0;
+      border-left: 3px solid #c53030;
+      font-size: 13px;
+    }
+
+    .welcome-message {
+      text-align: center;
+      color: #666;
+      padding: 60px 20px;
+      font-size: 14px;
+    }
+
+    .welcome-message h3 {
+      color: #2c3e50;
+      margin-bottom: 8px;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .chat-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-container::-webkit-scrollbar-track {
+      background: #f5f5f5;
+    }
+
+    .chat-container::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 3px;
+    }
+
+    .chat-container::-webkit-scrollbar-thumb:hover {
+      background: #999;
+    }
   </style>
 </head>
 <body>
+  <div class="container">
+    <div class="header">
+      <h1>CliniExpert Assistant</h1>
+      <p>AI-Powered Clinical Information System</p>
+    </div>
 
-<h2>AI Agent Chat</h2>
+    <div class="chat-container" id="chatContainer">
+      <div class="welcome-message">
+        <h3>Welcome</h3>
+        <p>Ask questions about clinical topics, medical information, or healthcare queries.<br>
+        This assistant provides evidence-based insights.</p>
+      </div>
+    </div>
 
-<div id="chat"></div>
+    <div class="typing-indicator" id="typingIndicator">
+      <span></span>
+      <span></span>
+      <span></span>
+      <span style="margin-left: 8px;">Processing...</span>
+    </div>
 
-<input id="input" placeholder="Type message..." style="width:80%">
-<button onclick="send()">Send</button>
+    <div class="input-container">
+      <div class="input-wrapper">
+        <input 
+          type="text" 
+          id="messageInput" 
+          placeholder="Type your question here..." 
+          autocomplete="off"
+        />
+      </div>
+      <button id="sendButton" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
 
-<script>
-  const sessionId = Math.random().toString(36).substring(7);
+  <script>
+    const sessionId = Math.random().toString(36).substring(7);
+    const chatContainer = document.getElementById('chatContainer');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+    const typingIndicator = document.getElementById('typingIndicator');
 
-  async function send() {
-    const inputBox = document.getElementById("input");
-    const message = inputBox.value;
-
-    if (!message) return;
-
-    appendMessage("You", message, "user");
-
-    const res = await fetch("https://kjq4s1qb-8000.inc1.devtunnels.ms/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        message: message,
-        session_id: sessionId
-      })
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
     });
 
-    const data = await res.json();
+    async function sendMessage() {
+      const message = messageInput.value.trim();
+      
+      if (!message) return;
 
-    appendMessage("Agent", data.reply || data.error, "agent");
+      messageInput.value = '';
+      sendButton.disabled = true;
 
-    inputBox.value = "";
-  }
+      const welcomeMsg = document.querySelector('.welcome-message');
+      if (welcomeMsg) welcomeMsg.remove();
 
-  function appendMessage(sender, text, cls) {
-    const chat = document.getElementById("chat");
-    chat.innerHTML += `<p class="${cls}"><b>${sender}:</b> ${text}</p>`;
-    chat.scrollTop = chat.scrollHeight;
-  }
-</script>
+      appendMessage('You', message, 'user');
 
+      typingIndicator.classList.add('active');
+      scrollToBottom();
+
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: message,
+            session_id: sessionId
+          })
+        });
+
+        const data = await res.json();
+
+        typingIndicator.classList.remove('active');
+
+        if (data.error) {
+          showError(data.error);
+        } else {
+          appendMessage('CliniExpert', data.reply, 'agent');
+        }
+
+      } catch (error) {
+        typingIndicator.classList.remove('active');
+        showError('Connection error: ' + error.message);
+      } finally {
+        sendButton.disabled = false;
+        messageInput.focus();
+      }
+    }
+
+    function appendMessage(sender, text, type) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message ' + type;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar';
+      avatar.textContent = type === 'user' ? 'U' : 'AI';
+
+      const content = document.createElement('div');
+      content.className = 'message-content';
+      content.textContent = text;
+
+      const time = document.createElement('span');
+      time.className = 'message-time';
+      time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      content.appendChild(time);
+
+      messageDiv.appendChild(avatar);
+      messageDiv.appendChild(content);
+      chatContainer.appendChild(messageDiv);
+
+      scrollToBottom();
+    }
+
+    function showError(errorText) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error-message';
+      errorDiv.textContent = '⚠️ Error: ' + errorText;
+      chatContainer.appendChild(errorDiv);
+      scrollToBottom();
+    }
+
+    function scrollToBottom() {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    window.onload = () => {
+      messageInput.focus();
+    };
+  </script>
 </body>
 </html>
